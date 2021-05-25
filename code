@@ -1,0 +1,68 @@
+#Se usan los datos de https://www.apielectoral.mx/ creado por @SocialTIC
+
+library(httr)
+library(tidyverse)
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(lattice)
+library(repurrrsive)
+library(listviewer)
+library(data.table)
+library(ggplot2)
+
+req_token="eyJraWQiOiJQNU9BRVwvbWwwUTdHRko0WVl0aVp6c3ZiXC9QU1JhXC9pbFZiOUNCeVdDSFpRPSIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiY2RyLXY1UWhhTGpmMVBQekY4UElqUSIsInN1YiI6IjkwNDczN2JiLWZjMjItNDZjNy1iMzM1LWExYzdiZTMyZjA0OSIsImF1ZCI6IjZkYjZibGxsYWltMWVicW5lZm9lNjFibjlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV2ZW50X2lkIjoiNTllYjY5ODYtODcyMS00ZDdhLTg3NjEtOWY2NGJmMTQ1ZjYzIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE2MjE5NzEyODEsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTIuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0yX0oxS0lzY3BoaCIsImNvZ25pdG86dXNlcm5hbWUiOiI5MDQ3MzdiYi1mYzIyLTQ2YzctYjMzNS1hMWM3YmUzMmYwNDkiLCJleHAiOjE2MjE5ODU2ODEsImlhdCI6MTYyMTk3MTI4MSwiZW1haWwiOiJvc2lyaXNnbGV6Z2FsdmFuQGdtYWlsLmNvbSJ9.uoTsB9YpS7zj9IWCHkcEo2CUVQi6Xu3IL_I2JQpNORQaYrp8L_n3ZDxJD-_f4v6X52B_3k6Vu14gK3R6H2gKG8kQijnwW1bc6n40M534gIJmwFwww5KXzN34uhRc-Alk4r5EYWSg-ONi1u_ib-dJTbBmvxkDTfoGE3u7QRl49VgObccqOkM6zlhsdGmZDQTmIHD_QBRq_VFzG_i_I6P8aRn3-uLpWaiBeWdn4Gz1OLiGhytvm6P9HUKbdvTqsRA8ebu5AtFmlzvfSIg-owfD0CMGJ6vMgToYRGDBiDQ8lw535XH1pVPEDkgvD59esGTfwkJA11U4ta8-J78z4T4O9Q"
+url <- ("https://e7f1hlosbh.execute-api.us-east-2.amazonaws.com/staging/export")
+
+mydata <- httr::GET(url, add_headers("Authorization"= req_token))
+
+http_status(mydata)
+mydata$status_code
+
+names(mydata)
+mydata$headers$`content-type`
+
+str(head(content(mydata)))
+headers(mydata)
+
+mycontent_text <- httr::content(mydata, as = "text", encoding = "UTF-8")
+str(mycontent_text)
+
+mycontent_parsed <- httr::content(mydata, as = "parsed", encoding = "UTF-8")
+str(mycontent_parsed)
+names(mycontent_parsed)
+mycontent_parsed[["persons"]]
+
+mycontent_from_jason <- fromJSON(mycontent_text)
+mycontent_from_jason
+names(mycontent_from_jason)
+mycontent_from_jason$persons
+
+socialmedia <- as.data.frame(mycontent_from_jason$persons)
+colnames(socialmedia)
+str(socialmedia$social_network_accounts, list.len = 3)
+
+SMgeneral <- purrr::map_df(socialmedia$social_network_accounts,~ .x)
+str(SMgeneral)
+table(SMgeneral$type)
+table(SMgeneral$type)/2767*100
+
+Facebook <- purrr::map_df(socialmedia$fb_urls,~ .x)
+str(Facebook)
+table(Facebook$note)
+count(Facebook, note, sort = TRUE)
+
+Instagram <- purrr::map_df(socialmedia$ig_urls,~ .x)
+str(Instagram)
+table(Instagram$note)
+table(Instagram$note)/2767*100
+count(Instagram, note, sort = TRUE)
+
+#Número total de perfiles de candidatos por red social
+#Facebook 1767
+#Instagram 1439
+#Twitter 1205
+#YouTube 160
+#LinkedIn 155
+#Tumblr 2
+#Flick 2
